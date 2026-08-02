@@ -4,17 +4,32 @@ const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL
 });
 
+// Attach the JWT token (if present) to every outgoing request automatically
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const registerUser = (data) =>
+  API.post('/auth/register', data).then(res => res.data);
+
+export const loginUser = (data) =>
+  API.post('/auth/login', data).then(res => res.data);
+
 export const createBooking = (bookingData) =>
   API.post('/bookings', bookingData).then(res => res.data);
 export const updateUser = (userId, data) => API.patch(`/users/${userId}`, data).then(res => res.data);
 
-export const fetchBookings = (userId) =>
-  API.get(`/bookings?userId=${userId}`).then(res => res.data);
+export const fetchBookings = () =>
+  API.get('/bookings').then(res => res.data);
 
 export const uploadPhoto = async (file, userId) => {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('userId', userId); 
+  formData.append('userId', userId);
 
   const response = await fetch('/api/upload/profile-photo', {
     method: 'POST',
@@ -24,7 +39,5 @@ export const uploadPhoto = async (file, userId) => {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Upload failed');
 
-  return data.user; 
+  return data.user;
 };
-
-

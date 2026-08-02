@@ -16,6 +16,7 @@ import SecurityPage from './components/SecurityPage';
 import BookingCard from './components/BookingCard';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import { useAuth } from './context/useAuth';
+import { registerUser, loginUser } from './utils/api';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -34,6 +35,7 @@ const App = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [authError, setAuthError] = useState('');
   const aboutScrollRef = useRef(null);
   const { login } = useAuth();
 
@@ -49,12 +51,23 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [location]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const fakeUser = isSignUp ? { name, email } : { name: 'User', email };
-    login(fakeUser);
-    setShowSignInModal(false);
-    navigate('/account');
+    setAuthError('');
+    try {
+      if (isSignUp) {
+        await registerUser({ name, email, password });
+        const loginData = await loginUser({ email, password });
+        login(loginData.user, loginData.token);
+      } else {
+        const loginData = await loginUser({ email, password });
+        login(loginData.user, loginData.token);
+      }
+      setShowSignInModal(false);
+      navigate('/account');
+    } catch (err) {
+      setAuthError(err.response?.data?.error || 'Something went wrong. Please try again.');
+    }
   };
 
   return (
@@ -90,6 +103,11 @@ const App = () => {
               <button type="button" className="btn-close" onClick={() => setShowSignInModal(false)}></button>
             </div>
             <div className="custom-modal-body">
+              {authError && (
+                <div className="alert alert-danger py-2" role="alert">
+                  {authError}
+                </div>
+              )}
               <form onSubmit={handleSubmit}>
                 {isSignUp && (
                   <div className="mb-3">

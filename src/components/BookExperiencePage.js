@@ -39,7 +39,7 @@ const BookExperiencePage = () => {
     }
 
     const bookingData = {
-      userId: user._id,
+      userId: user.id,
       propertyId: experience._id,
       type: 'experience',
       checkIn: new Date(),

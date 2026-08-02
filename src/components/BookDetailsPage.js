@@ -41,7 +41,7 @@ const BookDetailsPage = () => {
     }
 
     const bookingData = {
-      userId: user._id,
+      userId: user.id,
       propertyId: card._id,
       type,
       checkIn: new Date(),

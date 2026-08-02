@@ -14,7 +14,7 @@ const AccountPage = () => {
   useEffect(() => {
      document.title = 'StayFinder | Acoount';
     if (user) {
-      fetchBookings(user._id).then(setBookings).catch(console.error);
+      fetchBookings().then(setBookings).catch(console.error);
       setPhotoUrl(user?.photoUrl || ''); 
     }
   }, [user]);
