@@ -31,7 +31,7 @@ const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showSignInModal, setShowSignInModal] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(true);
+ const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -51,9 +51,22 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [location]);
 
+  const resetAuthForm = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setAuthError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
+
+    if (isSignUp && password.length < 6) {
+      setAuthError('Password must be at least 6 characters long.');
+      return;
+    }
+
     try {
       if (isSignUp) {
         await registerUser({ name, email, password });
@@ -63,6 +76,7 @@ const App = () => {
         const loginData = await loginUser({ email, password });
         login(loginData.user, loginData.token);
       }
+      resetAuthForm();
       setShowSignInModal(false);
       navigate('/account');
     } catch (err) {
@@ -73,7 +87,7 @@ const App = () => {
   return (
     <>
       <ScrollToTopButton />
-      <NavBar onSignInClick={() => setShowSignInModal(true)} />
+      <NavBar onSignInClick={() => { resetAuthForm(); setIsSignUp(false); setShowSignInModal(true); }} />
 
       <Routes>
         <Route
@@ -100,7 +114,7 @@ const App = () => {
           <div className="custom-modal">
             <div className="custom-modal-header d-flex justify-content-between align-items-center">
               <h5 className="modal-title">{isSignUp ? 'Sign Up' : 'Sign In'}</h5>
-              <button type="button" className="btn-close" onClick={() => setShowSignInModal(false)}></button>
+              <button type="button" className="btn-close" onClick={() => { setShowSignInModal(false); resetAuthForm(); }}></button>
             </div>
             <div className="custom-modal-body">
               {authError && (
@@ -148,7 +162,7 @@ const App = () => {
               <p className="mt-3 text-center">
                 {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                 <span
-                  onClick={() => setIsSignUp(!isSignUp)}
+                  onClick={() => { resetAuthForm(); setIsSignUp(!isSignUp); }}
                   style={{ cursor: 'pointer', color: '#4B0082' }}
                 >
                   {isSignUp ? 'Sign In' : 'Sign Up'}
