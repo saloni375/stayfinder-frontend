@@ -16,7 +16,7 @@ import SecurityPage from './components/SecurityPage';
 import BookingCard from './components/BookingCard';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import { useAuth } from './context/useAuth';
-import { registerUser, loginUser } from './utils/api';
+import { registerUser, loginUser, loginWithGoogle } from './utils/api';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -37,6 +37,7 @@ const App = () => {
   const [name, setName] = useState('');
   const [authError, setAuthError] = useState('');
   const aboutScrollRef = useRef(null);
+  const googleButtonRef = useRef(null);
   const { login } = useAuth();
 
   useEffect(() => {
@@ -57,6 +58,35 @@ const App = () => {
     setPassword('');
     setAuthError('');
   };
+
+   const handleGoogleResponse = async (response) => {
+    setAuthError('');
+    try {
+      const loginData = await loginWithGoogle(response.credential);
+      login(loginData.user, loginData.token);
+      resetAuthForm();
+      setShowSignInModal(false);
+      navigate('/account');
+    } catch (err) {
+      setAuthError('Google sign-in failed. Please try again.');
+    }
+  };
+
+  useEffect(() => {
+    if (showSignInModal && window.google && googleButtonRef.current) {
+      window.google.accounts.id.initialize({
+        client_id: '143009733954-jcfiu83f8dle46t7pvv0v5q3i03mqss1.apps.googleusercontent.com',
+        callback: handleGoogleResponse,
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 320,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSignInModal]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -159,6 +189,10 @@ const App = () => {
                   {isSignUp ? 'Sign Up' : 'Sign In'}
                 </button>
               </form>
+
+              <div className="text-center my-3" style={{ color: '#888' }}>— or —</div>
+              <div className="d-flex justify-content-center" ref={googleButtonRef}></div>
+
               <p className="mt-3 text-center">
                 {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                 <span

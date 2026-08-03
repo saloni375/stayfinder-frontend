@@ -19,6 +19,9 @@ export const registerUser = (data) =>
 export const loginUser = (data) =>
   API.post('/auth/login', data).then(res => res.data);
 
+export const loginWithGoogle = (credential) =>
+  API.post('/auth/google', { credential }).then(res => res.data);
+
 export const createBooking = (bookingData) =>
   API.post('/bookings', bookingData).then(res => res.data);
 export const updateUser = (userId, data) => API.patch(`/users/${userId}`, data).then(res => res.data);
