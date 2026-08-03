@@ -133,7 +133,7 @@ const AccountPage = () => {
               <FaQuestionCircle className="me-2 text-info" /> Help & Support
             </button>
             <button
-              onClick={logout}
+              onClick={() => { logout(); navigate('/'); }}
               className="list-group-item list-group-item-action border-0"
               style={{ backgroundColor: '#f8d7da', color: '#721c24' }}
             >

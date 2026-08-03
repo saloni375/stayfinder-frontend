@@ -35,7 +35,9 @@ const App = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [authError, setAuthError] = useState('');
+ const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
+  const [showPasswordHints, setShowPasswordHints] = useState(false);
   const aboutScrollRef = useRef(null);
   const googleButtonRef = useRef(null);
   const { login } = useAuth();
@@ -52,11 +54,13 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [location]);
 
-  const resetAuthForm = () => {
+const resetAuthForm = () => {
     setName('');
     setEmail('');
     setPassword('');
     setAuthError('');
+    setAuthSuccess('');
+    setShowPasswordHints(false);
   };
 
    const handleGoogleResponse = async (response) => {
@@ -88,20 +92,27 @@ const App = () => {
   }, [showSignInModal]);
 
 
+ const isPasswordStrongEnough = (pwd) =>
+    /[a-z]/.test(pwd) && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd) && pwd.length >= 8;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
+    setAuthSuccess('');
 
-    if (isSignUp && password.length < 6) {
-      setAuthError('Password must be at least 6 characters long.');
+    if (isSignUp && !isPasswordStrongEnough(password)) {
+      setAuthError('Password must be at least 8 characters and include a lowercase letter, an uppercase letter, and a number.');
       return;
     }
 
     try {
       if (isSignUp) {
         await registerUser({ name, email, password });
-        const loginData = await loginUser({ email, password });
-        login(loginData.user, loginData.token);
+        setAuthSuccess('Account created successfully! Please sign in below.');
+        setIsSignUp(false);
+        setName('');
+        setPassword('');
+        return;
       } else {
         const loginData = await loginUser({ email, password });
         login(loginData.user, loginData.token);
@@ -113,7 +124,6 @@ const App = () => {
       setAuthError(err.response?.data?.error || 'Something went wrong. Please try again.');
     }
   };
-
   return (
     <>
       <ScrollToTopButton />
@@ -152,6 +162,11 @@ const App = () => {
                   {authError}
                 </div>
               )}
+              {authSuccess && (
+                <div className="alert alert-success py-2" role="alert">
+                  {authSuccess}
+                </div>
+              )}
               <form onSubmit={handleSubmit}>
                 {isSignUp && (
                   <div className="mb-3">
@@ -182,8 +197,29 @@ const App = () => {
                     className="form-control"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setShowPasswordHints(true)}
+                    onBlur={() => setShowPasswordHints(false)}
                     required
                   />
+                  {isSignUp && showPasswordHints && (
+                    <div
+                      className="mt-2 p-2"
+                      style={{ background: '#f8f9fa', borderRadius: '6px', fontSize: '0.85rem' }}
+                    >
+                      <div style={{ color: /[a-z]/.test(password) ? 'green' : '#999' }}>
+                        {/[a-z]/.test(password) ? '✓' : '○'} A lowercase letter
+                      </div>
+                      <div style={{ color: /[A-Z]/.test(password) ? 'green' : '#999' }}>
+                        {/[A-Z]/.test(password) ? '✓' : '○'} A capital (uppercase) letter
+                      </div>
+                      <div style={{ color: /[0-9]/.test(password) ? 'green' : '#999' }}>
+                        {/[0-9]/.test(password) ? '✓' : '○'} A number
+                      </div>
+                      <div style={{ color: password.length >= 8 ? 'green' : '#999' }}>
+                        {password.length >= 8 ? '✓' : '○'} Minimum 8 characters
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <button type="submit" className="btn btn-dark w-100 rounded-pill mt-2">
                   {isSignUp ? 'Sign Up' : 'Sign In'}
