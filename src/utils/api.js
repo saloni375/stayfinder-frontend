@@ -42,5 +42,5 @@ export const uploadPhoto = async (file, userId) => {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Upload failed');
 
-  return data.user;
+  return data;
 };
