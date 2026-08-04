@@ -23,7 +23,7 @@ const AccountPage = () => {
     const file = e.target.files[0];
     if (file) {
       try {
-        const response = await uploadPhoto(file);
+        const response = await uploadPhoto(file, user.id);
         if (response?.photoUrl) {
           setPhotoUrl(response.photoUrl);
           alert("✅ Photo uploaded successfully!");
