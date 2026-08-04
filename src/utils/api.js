@@ -34,7 +34,7 @@ export const uploadPhoto = async (file, userId) => {
   formData.append('file', file);
   formData.append('userId', userId);
 
-  const response = await fetch('/api/upload/profile-photo', {
+  const response = await fetch(`${process.env.REACT_APP_API_URL}/upload/profile-photo`, {
     method: 'POST',
     body: formData,
   });
