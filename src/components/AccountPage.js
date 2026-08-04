@@ -15,7 +15,7 @@ const AccountPage = () => {
      document.title = 'StayFinder | Acoount';
     if (user) {
       fetchBookings().then(setBookings).catch(console.error);
-      setPhotoUrl(user?.photoUrl || ''); 
+      setPhotoUrl(user?.photo || ''); 
     }
   }, [user]);
 
@@ -24,8 +24,8 @@ const AccountPage = () => {
     if (file) {
       try {
         const response = await uploadPhoto(file, user.id);
-        if (response?.photoUrl) {
-          setPhotoUrl(response.photoUrl);
+        if (response?.url) {
+          setPhotoUrl(response.url);
           alert("✅ Photo uploaded successfully!");
         } else {
           alert("❌ Upload succeeded, but no photo URL returned.");
