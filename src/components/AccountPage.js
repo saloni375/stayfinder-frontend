@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { fetchBookings, uploadPhoto } from '../utils/api';
+import { fetchBookings, uploadPhoto,removePhoto } from '../utils/api';
 import { FaHeart, FaSignOutAlt, FaQuestionCircle } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
 const AccountPage = () => {
-  const { user, logout } = useAuth();
+  const { user, logout,login } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [photoUrl, setPhotoUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
      document.title = 'StayFinder | Acoount';
@@ -19,13 +20,15 @@ const AccountPage = () => {
     }
   }, [user]);
 
-  const handleUpload = async (e) => {
+ const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      setUploading(true);
       try {
         const response = await uploadPhoto(file, user.id);
         if (response?.url) {
           setPhotoUrl(response.url);
+          login({ ...user, photo: response.url });
           alert("✅ Photo uploaded successfully!");
         } else {
           alert("❌ Upload succeeded, but no photo URL returned.");
@@ -33,7 +36,20 @@ const AccountPage = () => {
       } catch (err) {
         console.error(err);
         alert("❌ Upload failed");
+      } finally {
+        setUploading(false);
       }
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    try {
+      await removePhoto(user.id);
+      setPhotoUrl('');
+      login({ ...user, photo: '' });
+    } catch (err) {
+      console.error(err);
+      alert("❌ Could not remove photo");
     }
   };
 
@@ -101,15 +117,25 @@ const AccountPage = () => {
                 />
               )}
             </label>
-            <input
+           <input
               type="file"
               id="upload-photo"
               style={{ display: 'none' }}
               onChange={handleUpload}
+              disabled={uploading}
             />
             <p className="text-muted mt-2" style={{ fontSize: '13px' }}>
-              Click avatar to upload
+              {uploading ? 'Uploading...' : 'Click avatar to upload'}
             </p>
+            {photoUrl && !uploading && (
+              <button
+                onClick={handleRemovePhoto}
+                className="btn btn-sm btn-outline-danger"
+                style={{ fontSize: '12px' }}
+              >
+                Remove photo
+              </button>
+            )}
           </div>
 
           <h4 className="text-center fw-bold mb-1">{user.name}</h4>
