@@ -27,5 +27,5 @@ StayFinder lets users search properties and experiences, book stays, and manage 
 ```bash
 npm install
 npm start          # frontend
-cd backend && npm install && npm start   # backend
+cd backend && npm install && node server.js   # backend
 ```
