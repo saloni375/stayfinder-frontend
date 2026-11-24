@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   FaMapMarkerAlt, FaClock, FaStar, FaWifi, FaCar,
@@ -9,16 +9,52 @@ import { MdCancel } from 'react-icons/md';
 import { createBooking } from '../utils/api';
 import { useAuth } from '../context/useAuth';
 
+// Turn a Date into 'YYYY-MM-DD' (the format <input type="date"> uses), in local time
+const toInputDate = (date) => {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+};
+const addDays = (dateStr, days) => {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return toInputDate(d);
+};
+const ONE_DAY = 24 * 60 * 60 * 1000;
+
 const BookDetailsPage = () => {
   const { type, id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [card, setCard] = useState(null);
   const [showBooking, setShowBooking] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
 
+
+  // Booking form: the user chooses dates and guests
+  const today = toInputDate(new Date());
+  const [checkIn, setCheckIn] = useState(today);
+  const [checkOut, setCheckOut] = useState(addDays(today, 1));
+  const [guests, setGuests] = useState(1);
+  const [bookingError, setBookingError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const isStay = type === 'stay';
+  const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / ONE_DAY);
+  const datesValid = !isStay || nights >= 1;
+  const totalPrice = card ? (isStay ? card.price * Math.max(nights, 0) : card.price * guests) : 0;
+
+  const handleCheckInChange = (value) => {
+    setCheckIn(value);
+    setBookingError('');
+    // Keep check-out at least one day after check-in
+    if (new Date(checkOut) <= new Date(value)) {
+      setCheckOut(addDays(value, 1));
+    }
+  };
+
   useEffect(() => {
-    document.title = 'StayFinder | Stays-Booking';
+    document.title = type === 'stay' ? 'StayFinder | Book a Stay' : 'StayFinder | Book an Experience';
     const fetchCard = async () => {
       try {
         const endpoint =
@@ -39,28 +75,35 @@ const BookDetailsPage = () => {
       alert('Please login to book.');
       return;
     }
+    if (!datesValid) {
+      setBookingError('Check-out must be after check-in.');
+      return;
+    }
 
     const bookingData = {
-      userId: user.id,
       propertyId: card._id,
       type,
-      checkIn: new Date(),
-      checkOut: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      guests: 1,
+      checkIn,
+      // An experience happens on one day, so it ends the next day
+      checkOut: isStay ? checkOut : addDays(checkIn, 1),
+      guests,
     };
 
+    setSubmitting(true);
+    setBookingError('');
     try {
       await createBooking(bookingData);
       alert('🎉 Booking confirmed!');
       setIsBooked(true);
       setShowBooking(false);
     } catch (err) {
-      console.error('Booking failed:', err);
-      alert('❌ Booking failed');
+      // Show the real reason from the backend, e.g. "already booked for the selected dates"
+      setBookingError(err.response?.data?.error || 'Booking failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
-
-  if (!card) {
+    if (!card) {
     return <div className="text-center text-light pt-5 mt-5">Loading details...</div>;
   }
 
@@ -132,31 +175,75 @@ const BookDetailsPage = () => {
                   Proceed to Book
                 </button>
               ) : (
-                <div className="mt-4 p-4 bg-dark rounded shadow-lg text-start">
+                               <div className="mt-4 p-4 bg-dark rounded shadow-lg text-start">
                   <h5>
                     <FaCalendarCheck className="me-2" />
                     Booking Details
                   </h5>
-                  <p>Total Price: ₹{card.price}</p>
-                  <p>Guests: 1 (adjustable later)</p>
-                  <p>Payment Mode: Credit/Debit Card, UPI</p>
+
+                  <div className="row g-2 mt-2">
+                    <div className={isStay ? 'col-6' : 'col-12'}>
+                      <label className="form-label small">{isStay ? 'Check-in' : 'Date'}</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={checkIn}
+                        min={today}
+                        onChange={(e) => handleCheckInChange(e.target.value)}
+                      />
+                    </div>
+                    {isStay && (
+                      <div className="col-6">
+                        <label className="form-label small">Check-out</label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          value={checkOut}
+                          min={addDays(checkIn, 1)}
+                          onChange={(e) => { setCheckOut(e.target.value); setBookingError(''); }}
+                        />
+                      </div>
+                    )}
+                    <div className="col-6">
+                      <label className="form-label small">Guests</label>
+                      <select
+                        className="form-select"
+                        value={guests}
+                        onChange={(e) => setGuests(Number(e.target.value))}
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 mb-1">
+                    {isStay
+                      ? `₹${card.price} × ${Math.max(nights, 0)} night${nights === 1 ? '' : 's'}`
+                      : `₹${card.price} × ${guests} guest${guests === 1 ? '' : 's'}`}
+                  </p>
+                  <p className="fw-bold">Total Price: ₹{totalPrice}</p>
+
+                  {bookingError && (
+                    <div className="alert alert-danger py-2">{bookingError}</div>
+                  )}
+
                   <button
                     className="btn btn-success mt-2 rounded-pill"
                     onClick={handleConfirmBooking}
+                    disabled={submitting || !datesValid}
                   >
-                    Confirm & Pay
+                    {submitting ? 'Booking...' : 'Confirm Booking'}
                   </button>
                 </div>
               )
             ) : (
               <button
-                className="btn btn-outline-danger rounded-pill mt-2"
-                onClick={() => {
-                  setIsBooked(false);
-                  alert('Your booking has been canceled.');
-                }}
+                className="btn btn-outline-light rounded-pill mt-2"
+                onClick={() => navigate('/account')}
               >
-                Cancel Booking
+                View My Bookings
               </button>
             )}
           </div>

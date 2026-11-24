@@ -29,13 +29,19 @@ export const updateUser = (userId, data) => API.patch(`/users/${userId}`, data).
 export const fetchBookings = () =>
   API.get('/bookings').then(res => res.data);
 
-export const uploadPhoto = async (file, userId) => {
+
+
+export const cancelBooking = (bookingId) =>
+  API.delete(`/bookings/${bookingId}`).then(res => res.data);
+
+// The backend now gets the user from the JWT token, so we don't send userId
+export const uploadPhoto = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('userId', userId);
 
- const response = await fetch(`${process.env.REACT_APP_API_URL}/upload/profile-photo`, {
+  const response = await fetch(`${process.env.REACT_APP_API_URL}/upload/profile-photo`, {
     method: 'POST',
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     body: formData,
   });
 
@@ -45,5 +51,5 @@ export const uploadPhoto = async (file, userId) => {
   return data;
 };
 
-export const removePhoto = (userId) =>
-  API.delete(`/upload/profile-photo/${userId}`).then(res => res.data);
+export const removePhoto = () =>
+  API.delete('/upload/profile-photo').then(res => res.data);

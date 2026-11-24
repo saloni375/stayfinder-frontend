@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { fetchBookings, uploadPhoto,removePhoto } from '../utils/api';
+import { fetchBookings, uploadPhoto, removePhoto, cancelBooking } from '../utils/api';
 import { FaHeart, FaSignOutAlt, FaQuestionCircle } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
@@ -11,6 +11,7 @@ const AccountPage = () => {
   const [bookings, setBookings] = useState([]);
   const [photoUrl, setPhotoUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+    const [cancellingId, setCancellingId] = useState(null);
 
   useEffect(() => {
      document.title = 'StayFinder | Acoount';
@@ -25,7 +26,7 @@ const AccountPage = () => {
     if (file) {
       setUploading(true);
       try {
-        const response = await uploadPhoto(file, user.id);
+        const response = await uploadPhoto(file);
         if (response?.url) {
           setPhotoUrl(response.url);
           login({ ...user, photo: response.url });
@@ -35,7 +36,7 @@ const AccountPage = () => {
         }
       } catch (err) {
         console.error(err);
-        alert("❌ Upload failed");
+        alert(`❌ ${err.message || 'Upload failed'}`);
       } finally {
         setUploading(false);
       }
@@ -44,7 +45,7 @@ const AccountPage = () => {
 
   const handleRemovePhoto = async () => {
     try {
-      await removePhoto(user.id);
+      await removePhoto()
       setPhotoUrl('');
       login({ ...user, photo: '' });
     } catch (err) {
@@ -52,6 +53,26 @@ const AccountPage = () => {
       alert("❌ Could not remove photo");
     }
   };
+
+    const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+
+    setCancellingId(bookingId);
+    try {
+      await cancelBooking(bookingId);
+      // Remove it from the list without reloading the page
+      setBookings((prev) => prev.filter((b) => b._id !== bookingId));
+    } catch (err) {
+      alert(`❌ ${err.response?.data?.error || 'Could not cancel booking'}`);
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  // A booking can be cancelled only if its check-in is today or later
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const canCancel = (b) => new Date(b.checkIn) >= startOfToday;
 
   if (!user) {
     return (
@@ -172,7 +193,7 @@ const AccountPage = () => {
             {bookings.length > 0 ? (
               bookings.map((b, i) => (
                 <div
-                  key={i}
+                  key={b._id}
                   className="p-3 mb-3 shadow-sm"
                   style={{
                     backgroundColor: '#fff',
@@ -183,15 +204,35 @@ const AccountPage = () => {
                 >
                   <h6 className="fw-bold">
                     {b.type === 'stay' ? '🏨 Stay' : '🎟️ Experience'}
+                    {b.propertyId?.title ? ` · ${b.propertyId.title}` : ''}
                   </h6>
                   <p className="mb-1">
                     <strong>Location:</strong> {b.propertyId?.location || 'N/A'}
                   </p>
                   <p className="mb-1">
-                    <strong>Date:</strong>{' '}
+                    <strong>{b.type === 'stay' ? 'Dates' : 'Date'}:</strong>{' '}
                     {new Date(b.checkIn).toLocaleDateString()}
+                    {b.type === 'stay' && ` – ${new Date(b.checkOut).toLocaleDateString()}`}
                   </p>
-                  <p className="mb-0 text-success fw-bold">✅ Booked</p>
+                  <p className="mb-1">
+                    <strong>Guests:</strong> {b.guests || 1}
+                  </p>
+                  <div className="d-flex justify-content-between align-items-center mt-2">
+                    {canCancel(b) ? (
+                      <>
+                        <span className="text-success fw-bold">✅ Booked</span>
+                        <button
+                          className="btn btn-sm btn-outline-danger rounded-pill"
+                          onClick={() => handleCancelBooking(b._id)}
+                          disabled={cancellingId === b._id}
+                        >
+                          {cancellingId === b._id ? 'Cancelling...' : 'Cancel'}
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-muted fw-bold">✔️ Completed</span>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (

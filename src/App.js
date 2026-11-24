@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import NavBar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import HomePage from './components/HomePage';
@@ -9,11 +9,11 @@ import HelpPage from './components/HelpPage';
 import SearchResultPage from './components/SearchResultPage';
 import FavoritesPage from './components/FavoritesPage';
 import AccountPage from './components/AccountPage';
-import BookNowPage from './components/BookDetailsPage';
+
 import BookDetailsPage from './components/BookDetailsPage';
-import BookExperiencePage from './components/BookExperiencePage';
+
 import SecurityPage from './components/SecurityPage';
-import BookingCard from './components/BookingCard';
+
 import ScrollToTopButton from './components/ScrollToTopButton';
 import { useAuth } from './context/useAuth';
 import { registerUser, loginUser, loginWithGoogle } from './utils/api';
@@ -140,10 +140,9 @@ const resetAuthForm = () => {
         <Route path="/search" element={<SearchResultPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/account" element={<AccountPage />} />
-        <Route path="/book/:id" element={<BookNowPage />} />
+        {/* One booking page for both: /book/stay/:id and /book/experience/:id */}
         <Route path="/book/:type/:id" element={<BookDetailsPage />} />
-        <Route path="/book/experience/:id" element={<BookExperiencePage />} />
-        <Route path="/my-bookings" element={<BookingCard />} />
+        <Route path="/my-bookings" element={<Navigate to="/account" replace />} />
         <Route path="/security" element={<SecurityPage />} />
       </Routes>
 
