@@ -185,11 +185,11 @@ const AccountPage = () => {
                     {b.type === 'stay' ? '🏨 Stay' : '🎟️ Experience'}
                   </h6>
                   <p className="mb-1">
-                    <strong>Location:</strong> {b.location}
+                    <strong>Location:</strong> {b.propertyId?.location || 'N/A'}
                   </p>
                   <p className="mb-1">
                     <strong>Date:</strong>{' '}
-                    {new Date(b.date).toLocaleDateString()}
+                    {new Date(b.checkIn).toLocaleDateString()}
                   </p>
                   <p className="mb-0 text-success fw-bold">✅ Booked</p>
                 </div>
