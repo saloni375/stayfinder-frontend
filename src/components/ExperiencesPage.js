@@ -16,7 +16,7 @@ const ExperiencesPage = () => {
   const [location, setLocation] = useState('');
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [rating, setRating] = useState(0);
-  const [type, setType] = useState('');
+ 
   const [sort, setSort] = useState('');
   const navigate = useNavigate();
 
@@ -42,13 +42,11 @@ const ExperiencesPage = () => {
     }
     return chunks;
   };
-
   const filtered = experiences.filter(exp =>
     exp.title.toLowerCase().includes(search.toLowerCase()) &&
     (location ? exp.location.toLowerCase() === location.toLowerCase() : true) &&
     exp.price >= priceRange[0] && exp.price <= priceRange[1] &&
-    exp.rating >= rating &&
-    (type ? exp.type.toLowerCase() === type.toLowerCase() : true)
+    exp.rating >= rating
   ).sort((a, b) => {
     if (sort === 'priceLow') return a.price - b.price;
     if (sort === 'priceHigh') return b.price - a.price;
@@ -126,11 +124,7 @@ const ExperiencesPage = () => {
             <option value="4">4+ Stars</option>
           </select>
         </div>
-        <div className="col-6 col-md-2">
-          <select className="form-select rounded-pill" onChange={e => setType(e.target.value)}>
-            <option value="">All Types</option>
-          </select>
-        </div>
+        
         <div className="col-6 col-md-2">
           <select className="form-select rounded-pill" onChange={e => setSort(e.target.value)}>
             <option value="">Sort</option>

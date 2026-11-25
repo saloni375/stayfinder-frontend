@@ -16,7 +16,7 @@ const StaysPage = () => {
   const [locationFilter, setLocationFilter] = useState('');
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [rating, setRating] = useState(0);
-  const [type, setType] = useState('');
+ 
   const [sort, setSort] = useState('');
 
   const navigate = useNavigate();
@@ -61,9 +61,7 @@ const StaysPage = () => {
     }
     result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
     result = result.filter(p => p.rating >= rating);
-    if (type) {
-      result = result.filter(p => p.type.toLowerCase() === type.toLowerCase());
-    }
+    
     if (sort === 'priceLow') result.sort((a, b) => a.price - b.price);
     if (sort === 'priceHigh') result.sort((a, b) => b.price - a.price);
     if (sort === 'ratingHigh') result.sort((a, b) => b.rating - a.rating);
@@ -71,9 +69,8 @@ const StaysPage = () => {
     setFiltered(result);
 
     const storedFavs = JSON.parse(localStorage.getItem('favorites')) || [];
-    setFavorites(storedFavs.map(f => `${f._id}-${f.type}`));
-  }, [search, locationFilter, priceRange, rating, type, sort, properties]);
-
+    setFavorites(storedFavs.map(f => `${f._id}-${f.type}`)); 
+   }, [search, locationFilter, priceRange, rating, sort, properties]);
   const toggleFavorite = (card) => {
     const stored = JSON.parse(localStorage.getItem('favorites')) || [];
     const exists = stored.find(f => f._id === card._id && f.type === 'stay');
@@ -224,12 +221,7 @@ const StaysPage = () => {
             <option value="4">4+ stars</option>
           </select>
         </div>
-        <div className="col-6 col-md-2">
-          <select className="form-select rounded-pill shadow" onChange={e => setType(e.target.value)}>
-            <option value="">All Types</option>
-            
-          </select>
-        </div>
+       
         <div className="col-6 col-md-2">
           <select className="form-select rounded-pill shadow" onChange={e => setSort(e.target.value)}>
             <option value="">Sort</option>
