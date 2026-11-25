@@ -6,7 +6,7 @@ import HomePage from './components/HomePage';
 import StaysPage from './components/StaysPage';
 import ExperiencesPage from './components/ExperiencesPage';
 import HelpPage from './components/HelpPage';
-import SearchResultPage from './components/SearchResultPage';
+
 import FavoritesPage from './components/FavoritesPage';
 import AccountPage from './components/AccountPage';
 
@@ -137,13 +137,14 @@ const resetAuthForm = () => {
         <Route path="/stays" element={<StaysPage />} />
         <Route path="/experiences" element={<ExperiencesPage />} />
         <Route path="/help" element={<HelpPage />} />
-        <Route path="/search" element={<SearchResultPage />} />
+     
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/account" element={<AccountPage />} />
         {/* One booking page for both: /book/stay/:id and /book/experience/:id */}
         <Route path="/book/:type/:id" element={<BookDetailsPage />} />
         <Route path="/my-bookings" element={<Navigate to="/account" replace />} />
         <Route path="/security" element={<SecurityPage />} />
+         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
       <BottomNav scrollToAbout={aboutScrollRef} />
