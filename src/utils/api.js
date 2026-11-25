@@ -13,6 +13,23 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// If the backend says our token is invalid or expired (401), log out
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isAuthRoute = error.config?.url?.startsWith('/auth/');
+    const hadToken = localStorage.getItem('token');
+
+    if (error.response?.status === 401 && !isAuthRoute && hadToken) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      alert('Your session has expired. Please sign in again.');
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const registerUser = (data) =>
   API.post('/auth/register', data).then(res => res.data);
 
