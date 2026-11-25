@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   FaMapMarkerAlt, FaClock, FaStar, FaWifi, FaCar,
-  FaUtensils, FaBath, FaHome, FaCalendarCheck, FaUserFriends
+  FaUtensils, FaBath, FaHome, FaCalendarCheck, FaUserFriends, FaCheckCircle
 } from 'react-icons/fa';
 import { MdCancel } from 'react-icons/md';
 import { createBooking } from '../utils/api';
@@ -20,6 +20,16 @@ const addDays = (dateStr, days) => {
   return toInputDate(d);
 };
 const ONE_DAY = 24 * 60 * 60 * 1000;
+
+// Icons for common amenities. Any other amenity gets a check-mark icon.
+const AMENITY_ICONS = {
+  'Free Wi-Fi': FaWifi,
+  'Parking': FaCar,
+  'Food Included': FaUtensils,
+  'Clean Washrooms': FaBath,
+  'Comfortable Stay': FaHome,
+  'Group Friendly': FaUserFriends,
+};
 
 const BookDetailsPage = () => {
   const { type, id } = useParams();
@@ -249,16 +259,23 @@ const BookDetailsPage = () => {
           </div>
         </div>
 
-        <hr className="text-secondary mt-5" />
-        <h5 className="mb-3">Included Amenities</h5>
-        <div className="row text-light">
-          <div className="col-6 col-md-4 mb-2"><FaWifi className="me-2" /> Free Wi-Fi</div>
-          <div className="col-6 col-md-4 mb-2"><FaCar className="me-2" /> Parking</div>
-          <div className="col-6 col-md-4 mb-2"><FaUtensils className="me-2" /> Food Included</div>
-          <div className="col-6 col-md-4 mb-2"><FaBath className="me-2" /> Clean Washrooms</div>
-          <div className="col-6 col-md-4 mb-2"><FaHome className="me-2" /> Comfortable Stay</div>
-          <div className="col-6 col-md-4 mb-2"><FaUserFriends className="me-2" /> Group Friendly</div>
-        </div>
+        {/* Show amenities only for stays that have them in the database */}
+        {isStay && card.amenities?.length > 0 && (
+          <>
+            <hr className="text-secondary mt-5" />
+            <h5 className="mb-3">Included Amenities</h5>
+            <div className="row text-light">
+              {card.amenities.map((amenity) => {
+                const Icon = AMENITY_ICONS[amenity] || FaCheckCircle;
+                return (
+                  <div key={amenity} className="col-6 col-md-4 mb-2">
+                    <Icon className="me-2" /> {amenity}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
